@@ -105,12 +105,48 @@ Sequence NWAlign::AlignSequences(const Sequence& S1, const Sequence& S2) {
 	return S;
 }
 
-double NWAlign::CalculateDistance(Sequence& S1, Sequence& S2) {
-	return 0.2312;
+double NWAlign::CalculateDistance(const Sequence& S1, const Sequence& S2) {
+	Sequence s = AlignSequences(S1, S2);
+
+	std::vector<std::vector<int>> mat;
+
+	mat.resize(s.GetLength());
+	for (unsigned int i = 0; i < s.GetLength(); i++) {
+		mat[i].resize(s.GetLength());
+	}
+
+	for (int i = 0; i < s.GetLength(); i++) {
+		mat[i][0] = i;
+		mat[0][i] = i;
+	}
+
+	//std::vector<char> v1(s.GetNumSequences());
+	//std::vector<char> v2(s.GetNumSequences());
+
+	char v1, v2;
+
+	for (int i = 1; i < s.GetLength(); i++) {
+		for (int j = 1; j < s.GetLength(); j++) {
+			v1 = s[i - 1][0];
+			v2 = s[j - 1][1];
+			if (v1 == v2) {
+				mat[i][j] = mat[i - 1][j - 1];
+			}
+			else {
+				mat[i][j] = min(mat[i - 1][j] + 1, mat[i][j - 1] + 1, mat[i - 1][j - 1] + 1);
+			}
+		}
+	}
+
+	return mat[s.GetLength() - 1][s.GetLength() - 1];
 }
 
 int NWAlign::max(int A, int B, int C) {
 	return std::max(A, std::max(B, C));
+}
+
+int NWAlign::min(int A, int B, int C) {
+	return std::min(A, std::min(B, C));
 }
 
 void NWAlign::InitScoreMatrix(int a, int b) {

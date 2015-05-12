@@ -18,10 +18,11 @@ public:
 	~NWAlign();
 
 	Sequence  AlignSequences(const Sequence& S1, const Sequence& S2);
-	double    CalculateDistance(Sequence& S1, Sequence& S2);
+	double    CalculateDistance(const Sequence& S1, const Sequence& S2);
 
 private:
 	int max(int A, int B, int C);
+	int min(int A, int B, int C);
 	void InitScoreMatrix(int a, int b);
 	void InitTraceMatrix(int a, int b);
 };
