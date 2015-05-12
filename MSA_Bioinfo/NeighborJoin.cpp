@@ -177,14 +177,14 @@ std::vector<std::vector<double>> NeighborJoin::GenDistanceMatrix() {
 	for (unsigned int i = 0; i < x; i++) {
 		std::vector<std::future<double>> threads;
 		for (unsigned int j = 0; j < x - (i + 1); j++) {
-			std::cout << i << " " << j + 1 + i << std::endl;
+			//std::cout << i << " " << j + 1 + i << std::endl;
 			threads.push_back(std::async(&NeighborJoin::Distance, this, Sequences[i], Sequences[j + (i + 1)]));
-			std::cout << "Thread " << j << " started." << std::endl;
+			//std::cout << "Thread " << j << " started." << std::endl;
 		}
 
 		for (unsigned int j = 0; j < x - (i + 1); j++) {
 			DistMat[i][j + (i + 1)] = DistMat[j + (i + 1)][i] = threads[j].get();
-			std::cout << "Thread " << j << " returned." << std::endl;
+			//std::cout << "Thread " << j << " returned." << std::endl;
 		}
 	}
 
