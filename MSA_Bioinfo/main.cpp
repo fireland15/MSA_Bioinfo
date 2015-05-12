@@ -1,67 +1,108 @@
 #include "Sequence.h"
 #include "NWAlign.h"
+#include "NeighborJoin.h"
 
 #include <string>
 #include <thread>
 #include <future>
+#include <iomanip>
+#include "Timer.h"
 
-Sequence alignment(const Sequence& s1, const Sequence& s2) {
-	NWAlign align;
-	return align.AlignSequences(s1, s2);
+std::string parseFASFA(std::string fname) {
+	std::ifstream fasta(fname);
+	std::string line, s;
+	std::vector<char> seq;
+	if (fasta.is_open()) {
+		getline(fasta, line);
+		while (!fasta.eof()) {
+			getline(fasta, line);
+			s.append(line);
+		}
+		return s;
+	}
+	else {
+		std::cout << "Error: Unable to open - " << fname << std::endl;
+		return "";
+	}
 }
 
-double distance(const Sequence& s1, const Sequence& s2) {
-	NWAlign align;
-	return align.CalculateDistance(s1, s2);
+void WriteToFile(Sequence& s, std::string filename) {
+	std::vector<std::string> out(s.GetNumSequences(), "");
+
+	for (int i = 0; i < s.GetLength(); i++) {
+		std::vector<char> c = s[i];
+		for (int j = 0; j < s.GetNumSequences(); j++) {
+			out[j] += (c[j]);
+		}
+	}
+
+	std::ofstream output;
+	int L = s.GetLength();
+	int charPerLine = 100;
+	output.open(filename);
+	if (output.is_open()) {
+
+
+		for (int k = 0; k < L / charPerLine; k++) {
+			output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(charPerLine - 5) << std::right << ((k + 1) * charPerLine) << std::endl;
+			for (unsigned int i = 0; i < s.GetNumSequences(); i++) {
+				for (int j = (k * charPerLine); j < (k + 1) * charPerLine; j++) {
+					output << out[i][j];
+				}
+				output << std::endl;
+			}
+			output << std::endl;
+		}
+
+
+		int k = L / charPerLine;
+		output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(L % charPerLine - 5) << std::right << L << std::endl;
+		for (unsigned int i = 0; i < s.GetNumSequences(); i++) {
+			for (int j = ((L / charPerLine) * charPerLine); j < L; j++) {
+				output << out[i][j];
+			}
+			output << std::endl;
+		}
+		output << std::endl;
+
+		output.close();
+	}
+	else {
+		std::cout << "Error: Unable to open - " << filename << std::endl;
+	}
 }
 
-int main() {
+int main(int argc, char** argv) {
 	std::ios_base::sync_with_stdio(false);
-	std::string str = "abcdeijdvsdvsdvifg";
-	Sequence s(str);
+	fli::Timer t;
+	t.Start();
 
-	std::string trs = "abcdsasceeg";
-	Sequence r(trs);
+	std::cout << argc << std::endl;
+	std::cout << argv[0] << std::endl;
+	std::cout << argv[1] << std::endl;
+	std::string filename(argv[1]);
 
-	std::string rts = "abcdsascedg";
-	Sequence q(rts);
-
-	std::future<Sequence> thread[2];
-	thread[0] = std::async(&alignment, s, r);
-	thread[1] = std::async(&alignment, r, q);
-
-	std::future<double> t3 = std::async(&distance, s, r);
-	std::future<double> t4 = std::async(&distance, r, q);
-
-	Sequence out1 = thread[0].get();
-	Sequence out2 = thread[1].get();
-	double d1 = t3.get();
-	double d2 = t4.get();
-
-	std::string top;
-	std::string bot;
-
-	for (unsigned int i = 0; i < out1.GetLength(); i++) {
-		std::vector<char> c = out1[i];
-		top += c[0];
-		bot += c[1];
+	NeighborJoin NJ;
+	std::ifstream input(filename);
+	if (input.is_open()){
+		while (!input.eof()) {
+			std::string fname;
+			std::getline(input, fname);
+			NJ.AddSequence(Sequence(parseFASFA(fname)));
+		}
+	}
+	else{
+		std::cout << "Error opening input file" << std::endl;
+		return 0;
 	}
 
-	std::cout << top << std::endl;
-	std::cout << bot << std::endl;
-	std::cout << d1 << std::endl;
+	Sequence MSA = NJ.AlignSequences();
 
-	top.clear();
-	bot.clear();
+	std::cout << t.GetElapsedTimeSec() << std::endl;
 
-	for (unsigned int i = 0; i < out2.GetLength(); i++) {
-		std::vector<char> c = out2[i];
-		top += c[0];
-		bot += c[1];
-	}
+	WriteToFile(MSA, "MSA.txt");
 
-	std::cout << top << std::endl;
-	std::cout << bot << std::endl;
-	std::cout << d2 << std::endl;
+	std::vector<std::string> out(MSA.GetNumSequences(), "");
+
 	return 0;
 }

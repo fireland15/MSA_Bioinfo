@@ -80,11 +80,13 @@
     <ClCompile Include="NeighborJoin.cpp" />
     <ClCompile Include="NWAlign.cpp" />
     <ClCompile Include="Sequence.cpp" />
+    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NeighborJoin.h" />
     <ClInclude Include="NWAlign.h" />
     <ClInclude Include="Sequence.h" />
+    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

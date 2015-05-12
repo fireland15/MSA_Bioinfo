@@ -7,8 +7,8 @@
 
 class NWAlign {
 private:
-	std::vector<std::vector<int>> score;
-	std::vector<std::vector<int>> trace;
+	std::vector<std::vector<short>> score;
+	std::vector<std::vector<short>> trace;
 
 	int mismatch = -1;
 	int match = 2;
