@@ -77,10 +77,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NeighborJoin.cpp" />
     <ClCompile Include="NWAlign.cpp" />
     <ClCompile Include="Sequence.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="NeighborJoin.h" />
     <ClInclude Include="NWAlign.h" />
     <ClInclude Include="Sequence.h" />
   </ItemGroup>

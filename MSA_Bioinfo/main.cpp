@@ -26,14 +26,15 @@ int main() {
 	std::string rts = "abcdsascedg";
 	Sequence q(rts);
 
-	std::future<Sequence> t1 = std::async(&alignment, s, r);
-	std::future<Sequence> t2 = std::async(&alignment, r, q);
+	std::future<Sequence> thread[2];
+	thread[0] = std::async(&alignment, s, r);
+	thread[1] = std::async(&alignment, r, q);
 
 	std::future<double> t3 = std::async(&distance, s, r);
 	std::future<double> t4 = std::async(&distance, r, q);
 
-	Sequence out1 = t1.get();
-	Sequence out2 = t2.get();
+	Sequence out1 = thread[0].get();
+	Sequence out2 = thread[1].get();
 	double d1 = t3.get();
 	double d2 = t4.get();
 

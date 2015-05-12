@@ -24,12 +24,18 @@
     <ClCompile Include="NWAlign.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NeighborJoin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Sequence.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NWAlign.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NeighborJoin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

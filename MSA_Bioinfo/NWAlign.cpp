@@ -120,9 +120,6 @@ double NWAlign::CalculateDistance(const Sequence& S1, const Sequence& S2) {
 		mat[0][i] = i;
 	}
 
-	//std::vector<char> v1(s.GetNumSequences());
-	//std::vector<char> v2(s.GetNumSequences());
-
 	char v1, v2;
 
 	for (int i = 1; i < s.GetLength(); i++) {

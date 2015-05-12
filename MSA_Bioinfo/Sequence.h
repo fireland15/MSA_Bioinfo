@@ -20,9 +20,9 @@ public:
 
 	void push(std::vector<char>& C);
 
-	int GetNumSequences()       { return numSequences; }
-	int GetNumSequences() const { return numSequences; }
+	int  GetNumSequences()       { return numSequences; }
+	int  GetNumSequences() const { return numSequences; }
 
-	int GetLength()       { return sequence.size() / numSequences; }
-	int GetLength() const { return sequence.size() / numSequences; }
+	int  GetLength()       { return sequence.size() / numSequences; }
+	int  GetLength() const { return sequence.size() / numSequences; }
 };
