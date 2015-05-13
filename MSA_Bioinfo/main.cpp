@@ -77,9 +77,6 @@ int main(int argc, char** argv) {
 	fli::Timer t;
 	t.Start();
 
-	std::cout << argc << std::endl;
-	std::cout << argv[0] << std::endl;
-	std::cout << argv[1] << std::endl;
 	std::string filename(argv[1]);
 
 	NeighborJoin NJ;

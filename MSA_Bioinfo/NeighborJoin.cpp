@@ -155,9 +155,20 @@ Sequence NeighborJoin::Align(const Sequence& s1, const Sequence& s2) {
 	return align.AlignSequences(s1, s2);
 }
 
-double NeighborJoin::Distance(const Sequence& s1, const Sequence& s2) {
-	NWAlign align;
-	return align.CalculateDistance(s1, s2);
+void NeighborJoin::Distance(ThreadData* data) {
+	std::cout << "a\n";
+	while (!data->killthread) {
+		std::cout << data->done;
+		while (!data->done) {
+			data->done = false;
+			data->started = true;
+
+			NWAlign align;
+			data->result = align.CalculateDistance(*(data->s1), *(data->s2));
+			data->done = true;
+		}
+		//_sleep(500);
+	}
 }
 
 std::vector<std::vector<double>> NeighborJoin::GenDistanceMatrix() {
@@ -169,24 +180,73 @@ std::vector<std::vector<double>> NeighborJoin::GenDistanceMatrix() {
 		DistMat[i].resize(x);
 	}
 
-	std::cout << "Generating NeighborJoin Distance Matrix..." << std::endl;
-
-	int progress = 0; 
-	int load = x * (x - 1) / 2;
+	std::stack<std::pair<int, int>> taskList;
 
 	for (unsigned int i = 0; i < x; i++) {
-		std::vector<std::future<double>> threads;
 		for (unsigned int j = 0; j < x - (i + 1); j++) {
-			//std::cout << i << " " << j + 1 + i << std::endl;
-			threads.push_back(std::async(&NeighborJoin::Distance, this, Sequences[i], Sequences[j + (i + 1)]));
-			//std::cout << "Thread " << j << " started." << std::endl;
-		}
-
-		for (unsigned int j = 0; j < x - (i + 1); j++) {
-			DistMat[i][j + (i + 1)] = DistMat[j + (i + 1)][i] = threads[j].get();
-			//std::cout << "Thread " << j << " returned." << std::endl;
+			taskList.push(std::pair<int, int>(i, j));
 		}
 	}
+
+	int maxNumThreads = std::thread::hardware_concurrency();
+	std::vector<volatile ThreadData> threadPoolData;
+	std::vector<std::thread> threadPool;
+	for (int i = 0; i < maxNumThreads; i++) {
+		threadPoolData.push_back((volatile ThreadData)(false, true, false));
+	}
+	for (int i = 0; i < maxNumThreads; i++) {
+		threadPool.push_back(std::thread(&NeighborJoin::Distance, *this, &(threadPoolData[i])));
+	}
+
+	while (!taskList.empty()) {
+		for (int i = 0; i < maxNumThreads; i++) {
+			std::cout << i << " " << threadPoolData[i].done << std::endl;
+			if (threadPoolData[i].done) {
+				if (threadPoolData[i].i >= 0 && threadPoolData[i].j >= 0) {
+					DistMat[threadPoolData[i].i][threadPoolData[i].j] = threadPoolData[i].result;
+				}
+				if (!taskList.empty()) {
+					std::pair<int, int> next = taskList.top();
+					taskList.pop();
+					threadPoolData[i].s1 = &Sequences[next.first];
+					threadPoolData[i].s2 = &Sequences[next.second];
+					threadPoolData[i].i = next.first;
+					threadPoolData[i].j = next.second;
+					threadPoolData[i].started = false;
+					threadPoolData[i].killthread = false;
+					threadPoolData[i].result = 0;
+					threadPoolData[i].done = false;
+				}
+				else {
+					threadPoolData[i].killthread = true;
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < maxNumThreads; i++) {
+		threadPool[i].join();
+		std::cout << "Thread " << i << " finished." << std::endl;
+	}
+
+	//std::cout << "Generating NeighborJoin Distance Matrix..." << std::endl;
+
+	//int progress = 0; 
+	//int load = x * (x - 1) / 2;
+
+	//for (unsigned int i = 0; i < x; i++) {
+	//	std::vector<std::future<double>> threads;
+	//	for (unsigned int j = 0; j < x - (i + 1); j++) {
+	//		//std::cout << i << " " << j + 1 + i << std::endl;
+	//		threads.push_back(std::async(&NeighborJoin::Distance, this, Sequences[i], Sequences[j + (i + 1)]));
+	//		//std::cout << "Thread " << j << " started." << std::endl;
+	//	}
+
+	//	for (unsigned int j = 0; j < x - (i + 1); j++) {
+	//		DistMat[i][j + (i + 1)] = DistMat[j + (i + 1)][i] = threads[j].get();
+	//		//std::cout << "Thread " << j << " returned." << std::endl;
+	//	}
+	//}
 
 	return DistMat;
 }
