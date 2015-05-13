@@ -155,19 +155,24 @@ Sequence NeighborJoin::Align(const Sequence& s1, const Sequence& s2) {
 	return align.AlignSequences(s1, s2);
 }
 
-void NeighborJoin::Distance(ThreadData* data) {
-	std::cout << "a\n";
-	while (!data->killthread) {
-		std::cout << data->done;
-		while (!data->done) {
-			data->done = false;
-			data->started = true;
+void NeighborJoin::Distance(int id, int& job_id, std::stack<std::pair<std::pair<Sequence, int>, std::pair<Sequence, int>>>& taskList, std::vector<std::vector<double>>& Distmat) {
+	std::cout << "Thread " << id << " started.\n";
+	while (!taskList.empty()) {
+		mutex_taskList.lock();
+		std::pair<Sequence, int> p = taskList.top().first;
+		std::pair<Sequence, int> q = taskList.top().second;
+		taskList.pop();
+		job_id = job_id + 1;
+		//std::cout << "Thread " << id << " started job " << job_id << "\n";
+		mutex_taskList.unlock();
 
-			NWAlign align;
-			data->result = align.CalculateDistance(*(data->s1), *(data->s2));
-			data->done = true;
-		}
-		//_sleep(500);
+		NWAlign align;
+		double result = align.CalculateDistance(p.first, q.first);
+
+		mutex_DistMat.lock();
+		Distmat[p.second][q.second] = Distmat[q.second][p.second] = result;
+		mutex_DistMat.unlock();
+		//std::cout << "Thread " << id << " finished." << std::endl;
 	}
 }
 
@@ -180,53 +185,31 @@ std::vector<std::vector<double>> NeighborJoin::GenDistanceMatrix() {
 		DistMat[i].resize(x);
 	}
 
-	std::stack<std::pair<int, int>> taskList;
+	std::stack<std::pair<std::pair<Sequence, int>, std::pair<Sequence, int>>> taskList;
 
 	for (unsigned int i = 0; i < x; i++) {
 		for (unsigned int j = 0; j < x - (i + 1); j++) {
-			taskList.push(std::pair<int, int>(i, j));
+			taskList.push(std::pair<std::pair<Sequence, int>, std::pair<Sequence, int>>(std::pair<Sequence, int>(Sequences[i], i), std::pair<Sequence, int>(Sequences[j], j)));
 		}
 	}
 
-	int maxNumThreads = std::thread::hardware_concurrency();
-	std::vector<volatile ThreadData> threadPoolData;
+	int maxNumThreads = std::thread::hardware_concurrency() - 1;
+	std::cout << "Max Threads: " << maxNumThreads << std::endl;
 	std::vector<std::thread> threadPool;
+	int job_id = 0;
+
 	for (int i = 0; i < maxNumThreads; i++) {
-		threadPoolData.push_back((volatile ThreadData)(false, true, false));
-	}
-	for (int i = 0; i < maxNumThreads; i++) {
-		threadPool.push_back(std::thread(&NeighborJoin::Distance, *this, &(threadPoolData[i])));
+		threadPool.push_back(std::thread(&NeighborJoin::Distance, *this, i, std::ref(job_id), std::ref(taskList), std::ref(DistMat)));
 	}
 
 	while (!taskList.empty()) {
-		for (int i = 0; i < maxNumThreads; i++) {
-			std::cout << i << " " << threadPoolData[i].done << std::endl;
-			if (threadPoolData[i].done) {
-				if (threadPoolData[i].i >= 0 && threadPoolData[i].j >= 0) {
-					DistMat[threadPoolData[i].i][threadPoolData[i].j] = threadPoolData[i].result;
-				}
-				if (!taskList.empty()) {
-					std::pair<int, int> next = taskList.top();
-					taskList.pop();
-					threadPoolData[i].s1 = &Sequences[next.first];
-					threadPoolData[i].s2 = &Sequences[next.second];
-					threadPoolData[i].i = next.first;
-					threadPoolData[i].j = next.second;
-					threadPoolData[i].started = false;
-					threadPoolData[i].killthread = false;
-					threadPoolData[i].result = 0;
-					threadPoolData[i].done = false;
-				}
-				else {
-					threadPoolData[i].killthread = true;
-				}
-			}
-		}
+		_sleep(1);
+		//std::cout << taskList.size() << std::endl;
 	}
 
 	for (int i = 0; i < maxNumThreads; i++) {
 		threadPool[i].join();
-		std::cout << "Thread " << i << " finished." << std::endl;
+		std::cout << "Thread " << i << " killed." << std::endl;
 	}
 
 	//std::cout << "Generating NeighborJoin Distance Matrix..." << std::endl;

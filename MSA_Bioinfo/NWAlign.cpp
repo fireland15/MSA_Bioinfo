@@ -54,6 +54,8 @@ Sequence NWAlign::AlignSequences(const Sequence& S1, const Sequence& S2) {
 		}
 	}
 
+	//std::cout << "Scoring Finished" << std::endl;
+
 	// Traceback
 	int m = rows;
 	int n = cols;
@@ -96,11 +98,15 @@ Sequence NWAlign::AlignSequences(const Sequence& S1, const Sequence& S2) {
 		}
 	}
 
+	//std::cout << "Traceback finished" << std::endl;
+
 	Sequence S;
 	while (!AlignStack.empty()){
 		S.push(AlignStack.top());
 		AlignStack.pop();
 	}
+
+	//std::cout << "Alignment finished" << std::endl;
 
 	return S;
 }
