@@ -38,7 +38,7 @@ std::vector<char> Sequence::operator[](int index) const {
 
 void Sequence::push(std::vector<char>& C) {
 	if (numSequences == 1) {
-		numSequences = C.size();
+		numSequences = (int)C.size();
 	}
 	if (numSequences == C.size()) {
 		for (unsigned int i = 0; i < C.size(); i++) {

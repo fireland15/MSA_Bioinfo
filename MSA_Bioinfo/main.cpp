@@ -45,7 +45,7 @@ void WriteToFile(Sequence& s, std::string filename) {
 
 		for (int k = 0; k < L / charPerLine; k++) {
 			output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(charPerLine - 5) << std::right << ((k + 1) * charPerLine) << std::endl;
-			for (unsigned int i = 0; i < s.GetNumSequences(); i++) {
+			for (int i = 0; i < s.GetNumSequences(); i++) {
 				for (int j = (k * charPerLine); j < (k + 1) * charPerLine; j++) {
 					output << out[i][j];
 				}
@@ -57,7 +57,7 @@ void WriteToFile(Sequence& s, std::string filename) {
 
 		int k = L / charPerLine;
 		output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(L % charPerLine - 5) << std::right << L << std::endl;
-		for (unsigned int i = 0; i < s.GetNumSequences(); i++) {
+		for (int i = 0; i < s.GetNumSequences(); i++) {
 			for (int j = ((L / charPerLine) * charPerLine); j < L; j++) {
 				output << out[i][j];
 			}
@@ -74,17 +74,26 @@ void WriteToFile(Sequence& s, std::string filename) {
 
 int main(int argc, char** argv) {
 	std::ios_base::sync_with_stdio(false);
-	fli::Timer t;
-	t.Start();
+	
 
-	std::string filename(argv[1]);
+	std::string filename;
 
-	NeighborJoin NJ;
+	std::cout << argc << std::endl;
+	if (argc == 1){
+		std::cout << "Enter the name of the input file: ";
+		std::cin >> filename;
+	}
+	else {
+		filename = argv[1];
+	}
+	int f = 6128;
+	NeighborJoin NJ(4, f);
 	std::ifstream input(filename);
 	if (input.is_open()){
 		while (!input.eof()) {
 			std::string fname;
 			std::getline(input, fname);
+			std::cout << "Opening " << fname << std::endl;
 			NJ.AddSequence(Sequence(parseFASFA(fname)));
 		}
 	}
@@ -92,6 +101,9 @@ int main(int argc, char** argv) {
 		std::cout << "Error opening input file" << std::endl;
 		return 0;
 	}
+
+	fli::Timer t;
+	t.Start();
 
 	Sequence MSA = NJ.AlignSequences();
 

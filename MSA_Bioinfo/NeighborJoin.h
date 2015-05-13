@@ -6,26 +6,15 @@
 #include <future>
 #include <fstream>
 #include <sstream>
-
-struct ThreadData {
-	Sequence* s1;
-	Sequence* s2;
-	bool started;
-	bool done;
-	double result;
-	int i, j;
-	bool killthread;
-
-	ThreadData(bool _started = false, bool _done = true, bool _killthread = false) : started(_started), done(_done), killthread(_killthread), i(-1), j(-1) {
-
-	}
-};
+#include "Timer.h"
 
 class NeighborJoin {
 private:
 	std::vector<Sequence> Sequences;
+	int maxThreads;
+	int memLimit;
 public:
-	NeighborJoin();
+	NeighborJoin(int _maxThreads, int _memLimit);
 	NeighborJoin(const NeighborJoin& nj) {
 
 	}

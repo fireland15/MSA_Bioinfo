@@ -1,7 +1,8 @@
 #include "NeighborJoin.h"
 
-NeighborJoin::NeighborJoin() {
-
+NeighborJoin::NeighborJoin(int _maxThreads, int _memLimit ) { // 1GB memory default
+	maxThreads = _maxThreads;
+	memLimit = _memLimit;
 }
 
 NeighborJoin::~NeighborJoin() {
@@ -156,30 +157,36 @@ Sequence NeighborJoin::Align(const Sequence& s1, const Sequence& s2) {
 }
 
 void NeighborJoin::Distance(int id, int& job_id, std::stack<std::pair<std::pair<Sequence, int>, std::pair<Sequence, int>>>& taskList, std::vector<std::vector<double>>& Distmat) {
-	std::cout << "Thread " << id << " started.\n";
+	fli::Timer clock;
+	clock.Start();
 	while (!taskList.empty()) {
+		int job;
 		mutex_taskList.lock();
 		std::pair<Sequence, int> p = taskList.top().first;
 		std::pair<Sequence, int> q = taskList.top().second;
 		taskList.pop();
-		job_id = job_id + 1;
-		//std::cout << "Thread " << id << " started job " << job_id << "\n";
+		job = job_id++;
 		mutex_taskList.unlock();
 
 		NWAlign align;
 		double result = align.CalculateDistance(p.first, q.first);
+		clock.Stop();
+		double time = clock.GetElapsedTimeSec();
+		std::stringstream ss;
+		ss << "Job: " << job_id << " - Thread " << id << " - " << time << " sec" << std::endl;
+		std::cout << ss.str();
+		clock.Start();
 
 		mutex_DistMat.lock();
 		Distmat[p.second][q.second] = Distmat[q.second][p.second] = result;
 		mutex_DistMat.unlock();
-		//std::cout << "Thread " << id << " finished." << std::endl;
 	}
 }
 
 std::vector<std::vector<double>> NeighborJoin::GenDistanceMatrix() {
 	std::vector<std::vector<double>> DistMat;
 
-	unsigned int x = Sequences.size();
+	unsigned int x = (unsigned int)Sequences.size();
 	DistMat.resize(x);
 	for (unsigned int i = 0; i < x; i++) {
 		DistMat[i].resize(x);
@@ -193,44 +200,46 @@ std::vector<std::vector<double>> NeighborJoin::GenDistanceMatrix() {
 		}
 	}
 
-	int maxNumThreads = std::thread::hardware_concurrency() - 1;
+	int maxNumThreads;
+	int maxHardwareThreads = std::thread::hardware_concurrency();
+	if (maxThreads > maxHardwareThreads) {
+		maxNumThreads = maxHardwareThreads;
+	}
+	else {
+		maxNumThreads = maxThreads;
+	}
+
+	long int estimatedMem = (3 * Sequences[0].GetLength() * Sequences[0].GetLength()) / (1024 * 1024);
+	std::cout << Sequences[0].GetLength() * Sequences[0].GetLength() << std::endl;
+	std::cout << estimatedMem << std::endl;
+	if (estimatedMem > 0) {
+		if (memLimit / (estimatedMem) < maxNumThreads) {
+			std::cout << memLimit / (estimatedMem) << std::endl;
+			maxNumThreads = memLimit / (estimatedMem);
+		}
+	}
+
 	std::cout << "Max Threads: " << maxNumThreads << std::endl;
+	std::cout << "Total jobs: " << x * (x - 1) / 2 << std::endl;
+
 	std::vector<std::thread> threadPool;
 	int job_id = 0;
 
 	for (int i = 0; i < maxNumThreads; i++) {
 		threadPool.push_back(std::thread(&NeighborJoin::Distance, *this, i, std::ref(job_id), std::ref(taskList), std::ref(DistMat)));
+		//std::stringstream ss;
+		//ss << "Thread " << i << " started.\n";
+		//std::cout << ss.str();
 	}
 
 	while (!taskList.empty()) {
-		_sleep(1);
-		//std::cout << taskList.size() << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 
 	for (int i = 0; i < maxNumThreads; i++) {
 		threadPool[i].join();
 		std::cout << "Thread " << i << " killed." << std::endl;
 	}
-
-	//std::cout << "Generating NeighborJoin Distance Matrix..." << std::endl;
-
-	//int progress = 0; 
-	//int load = x * (x - 1) / 2;
-
-	//for (unsigned int i = 0; i < x; i++) {
-	//	std::vector<std::future<double>> threads;
-	//	for (unsigned int j = 0; j < x - (i + 1); j++) {
-	//		//std::cout << i << " " << j + 1 + i << std::endl;
-	//		threads.push_back(std::async(&NeighborJoin::Distance, this, Sequences[i], Sequences[j + (i + 1)]));
-	//		//std::cout << "Thread " << j << " started." << std::endl;
-	//	}
-
-	//	for (unsigned int j = 0; j < x - (i + 1); j++) {
-	//		DistMat[i][j + (i + 1)] = DistMat[j + (i + 1)][i] = threads[j].get();
-	//		//std::cout << "Thread " << j << " returned." << std::endl;
-	//	}
-	//}
-
 	return DistMat;
 }
 

@@ -23,6 +23,6 @@ public:
 	int  GetNumSequences()       { return numSequences; }
 	int  GetNumSequences() const { return numSequences; }
 
-	int  GetLength()       { return sequence.size() / numSequences; }
-	int  GetLength() const { return sequence.size() / numSequences; }
+	int  GetLength()       { return (int)(sequence.size() / numSequences); }
+	int  GetLength() const { return (int)(sequence.size() / numSequences); }
 };
