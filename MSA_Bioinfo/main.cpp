@@ -38,26 +38,28 @@ void WriteToFile(Sequence& s, std::string filename) {
 
 	std::ofstream output;
 	int L = s.GetLength();
-	int charPerLine = 100;
+	int charPerLine = 60;
 	output.open(filename);
 	if (output.is_open()) {
 
-
+		output << "CLUSTALW" << std::endl << std::endl;
 		for (int k = 0; k < L / charPerLine; k++) {
-			output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(charPerLine - 5) << std::right << ((k + 1) * charPerLine) << std::endl;
+			//output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(charPerLine - 5) << std::right << ((k + 1) * charPerLine) << std::endl;
 			for (int i = 0; i < s.GetNumSequences(); i++) {
+				output << "Sequence" << i << "\t";
 				for (int j = (k * charPerLine); j < (k + 1) * charPerLine; j++) {
 					output << out[i][j];
 				}
 				output << std::endl;
 			}
-			output << std::endl;
+			output << std::endl << std::endl;
 		}
 
 
 		int k = L / charPerLine;
-		output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(L % charPerLine - 5) << std::right << L << std::endl;
+		//output << std::setw(5) << std::left << (k * charPerLine) + 1 << std::setw(L % charPerLine - 5) << std::right << L << std::endl;
 		for (int i = 0; i < s.GetNumSequences(); i++) {
+			output << "Sequence" << i << "\t";
 			for (int j = ((L / charPerLine) * charPerLine); j < L; j++) {
 				output << out[i][j];
 			}

@@ -12,7 +12,7 @@ private:
 
 	int mismatch = -1;
 	int match = 2;
-	int gap = -2;
+	int gap = -3;
 public:
 	NWAlign();
 	~NWAlign();
